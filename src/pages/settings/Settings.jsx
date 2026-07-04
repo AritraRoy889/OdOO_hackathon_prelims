@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Bell, Monitor, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -24,7 +24,21 @@ export default function Settings() {
     phone: user?.phone || '',
     department: user?.department || '',
     address: user?.address || '',
+    avatar: user?.avatar || '',
   });
+
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile(p => ({ ...p, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Password form
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -118,13 +132,30 @@ export default function Settings() {
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                    {profile.name.charAt(0)}
-                  </div>
+                  {profile.avatar ? (
+                    <img src={profile.avatar} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover shadow-md border border-gray-200 dark:border-gray-700" />
+                  ) : (
+                    <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                      {profile.name.charAt(0)}
+                    </div>
+                  )}
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white">{profile.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{user?.role || 'Admin'}</p>
-                    <button type="button" className="text-xs text-violet-600 hover:text-violet-700 mt-1">Change photo</button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs text-violet-600 hover:text-violet-700 mt-1 font-medium"
+                    >
+                      Change photo
+                    </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

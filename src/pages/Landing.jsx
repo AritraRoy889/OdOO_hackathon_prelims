@@ -1,48 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Briefcase, Mail, Lock, User, X, Hash } from 'lucide-react';
+import { ArrowRight, Briefcase, Mail, Lock, User, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, register } = useAuth();
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
-  const [uniqueId, setUniqueId] = useState('');
-
-  // Auto-generate Unique ID and Role based on email input
-  useEffect(() => {
-    if (email.trim().length > 0) {
-      // Simple hash function for demonstration
-      let hash = 0;
-      for (let i = 0; i < email.length; i++) {
-        hash = email.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const hex = Math.abs(hash).toString(16).toUpperCase();
-      const generatedId = `UID-${hex.padStart(6, '0').slice(0, 6)}`;
-      setUniqueId(generatedId);
-      
-      // Decide role based on hash: even = HR, odd = Employee
-      if (Math.abs(hash) % 2 === 0) {
-        setRole('HR');
-      } else {
-        setRole('Employee');
-      }
-    } else {
-      setUniqueId('');
-      setRole('');
-    }
-  }, [email]);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('Employee');
+  const [loading, setLoading] = useState(false);
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
-    // In a real app, this would create an account.
-    // For now, redirect to login page.
-    navigate('/login');
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    register(email, password, role);
+    if (role === 'Employee') {
+      navigate('/emp/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -79,15 +63,26 @@ export default function Landing() {
               Empowering organizations to discover, nurture, and manage top talent through skill-based insights and intuitive human resource management.
             </p>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsRegistering(true)}
-              className="group relative inline-flex items-center gap-2 bg-white text-indigo-700 px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
-            >
-              Register
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsRegistering(true)}
+                className="group relative inline-flex items-center gap-2 bg-white text-indigo-700 px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+              >
+                Register
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/login')}
+                className="group relative inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-white/20 transition-all duration-300"
+              >
+                Log In
+              </motion.button>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -96,30 +91,30 @@ export default function Landing() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.4 }}
-            className="z-10 bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative"
+            className="z-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl w-full max-w-md p-8 relative"
           >
             <button 
               onClick={() => setIsRegistering(false)} 
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
             
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-              <p className="text-sm text-gray-500 mt-1">Join us to discover top talent.</p>
+            <div className="mb-6 text-center">
+              <h2 className="text-3xl font-bold text-white">Create Account</h2>
+              <p className="text-sm text-indigo-100 mt-2 font-medium">Join us to discover top talent.</p>
             </div>
             
-            <form onSubmit={handleRegisterSubmit} className="space-y-5">
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-200" />
                   <input 
                     type="email" 
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="Email ID" 
-                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
                     required
                   />
                 </div>
@@ -127,61 +122,80 @@ export default function Landing() {
               
               <div>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-200" />
                   <input 
                     type="password" 
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Password" 
-                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 outline-none transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
                     required
                   />
                 </div>
-                <div className="flex justify-end mt-2.5">
-                  <a href="#" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-                    Forgot password?
-                  </a>
-                </div>
               </div>
 
-              {/* Show unique ID and Auto-assigned role section */}
-              <AnimatePresence>
-                {uniqueId && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-1">Generated Unique ID</p>
-                          <div className="flex items-center gap-1.5">
-                            <Hash className="w-4 h-4 text-indigo-500" />
-                            <p className="font-mono text-lg font-bold text-indigo-900">{uniqueId}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 pt-3 border-t border-indigo-200/60">
-                        <span className="text-sm font-medium text-indigo-700">System Assigned Role:</span>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-md shadow-sm border border-indigo-100">
-                          {role === 'HR' ? <Briefcase className="w-3.5 h-3.5 text-indigo-600" /> : <User className="w-3.5 h-3.5 text-indigo-600" />}
-                          <span className="text-sm font-bold text-indigo-900">{role}</span>
-                        </div>
-                      </div>
+                  <div>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-200" />
+                      <input 
+                        type="password" 
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter Password" 
+                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
+                        required
+                      />
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setRole('HR')}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 ${
+                        role === 'HR' 
+                          ? 'bg-white text-indigo-700 border-white shadow-lg' 
+                          : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      <span className="font-semibold text-sm">HR</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('Employee')}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 ${
+                        role === 'Employee' 
+                          ? 'bg-white text-indigo-700 border-white shadow-lg' 
+                          : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="font-semibold text-sm">Employee</span>
+                    </button>
+                  </div>
 
               <button
                 type="submit"
-                className="w-full mt-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 transition-all duration-200 flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full mt-4 bg-white text-indigo-700 hover:bg-indigo-50 font-bold py-3.5 rounded-xl shadow-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Register Account <ArrowRight className="w-4 h-4" />
+                {loading ? 'Processing...' : 'Register Account'} 
+                {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
+
+              <div className="text-center mt-4">
+                <p className="text-sm text-indigo-200">
+                  Already have an account?{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => navigate('/login')} 
+                    className="text-white font-semibold hover:underline"
+                  >
+                    Log In
+                  </button>
+                </p>
+              </div>
             </form>
           </motion.div>
         )}

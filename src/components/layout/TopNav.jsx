@@ -18,6 +18,13 @@ const breadcrumbMap = {
   '/admin':          'Admin Panel',
   '/reports':        'Reports',
   '/settings':       'Settings',
+  '/emp/dashboard':  'Employee Dashboard',
+  '/emp/job-details':'Job Details',
+  '/emp/attendance': 'My Attendance',
+  '/emp/leave':      'My Leave',
+  '/emp/payroll':    'My Payroll',
+  '/emp/documents':  'My Documents',
+  '/emp/settings':   'My Settings',
 };
 
 const notifications = [
@@ -153,7 +160,9 @@ export default function TopNav({ setMobileOpen }) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-xs">{user?.name?.charAt(0) || 'A'}</span>
             </div>
-            <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">{user?.name?.split(' ')[0] || 'Admin'}</span>
+            <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
+              {user?.name?.split(' ')[0] || 'Admin'}
+            </span>
             <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
           </button>
 
@@ -174,8 +183,8 @@ export default function TopNav({ setMobileOpen }) {
                   </span>
                 </div>
                 {[
-                  { icon: User,     label: 'My Profile', action: () => navigate('/settings') },
-                  { icon: Settings, label: 'Settings',   action: () => navigate('/settings') },
+                  { icon: User,     label: 'My Profile', action: () => navigate(user?.role === 'Employee' ? '/emp/settings' : '/settings') },
+                  { icon: Settings, label: 'Settings',   action: () => navigate(user?.role === 'Employee' ? '/emp/settings' : '/settings') },
                 ].map(({ icon: Icon, label, action }) => (
                   <button key={label} onClick={() => { action(); setShowProfile(false); }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">

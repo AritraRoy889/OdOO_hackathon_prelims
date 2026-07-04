@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Briefcase, ArrowRight, Users, Clock, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -25,8 +25,15 @@ export default function Login() {
     await new Promise(r => setTimeout(r, 800));
     const result = login(form.email, form.password);
     setLoading(false);
-    if (result.success) navigate('/dashboard');
-    else setError(result.error);
+    if (result.success) {
+      if (result.user.role === 'Employee') {
+        navigate('/emp/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } else {
+      setError(result.error);
+    }
   };
 
   return (
@@ -125,11 +132,14 @@ export default function Login() {
           </div>
 
           {/* Demo hint */}
-          <div className="flex items-start gap-2.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl px-4 py-3 mb-6">
-            <AlertCircle className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-            <p className="text-indigo-700 dark:text-indigo-300 text-xs">
-              Demo credentials: <span className="font-semibold">admin@hrms.com</span> / <span className="font-semibold">admin123</span>
-            </p>
+          <div className="flex flex-col gap-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl px-4 py-3 mb-6">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+              <div className="text-indigo-700 dark:text-indigo-300 text-xs">
+                <p>HR: <span className="font-semibold">admin@hrms.com</span> / <span className="font-semibold">admin123</span></p>
+                <p className="mt-1">Employee: <span className="font-semibold">emp@hrms.com</span> / <span className="font-semibold">emp123</span></p>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -208,6 +218,13 @@ export default function Login() {
                 <> Sign In <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
+
+            <p className="text-center mt-6 text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{' '}
+              <Link to="/" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline transition-colors">
+                Register here
+              </Link>
+            </p>
           </form>
 
           <p className="text-center text-gray-400 text-xs mt-8">
