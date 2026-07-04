@@ -4,6 +4,9 @@ from app.config import Config
 from app.models.user import db
 from app.routes.auth_routes import auth_bp
 
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 def create_app(config_class=Config):
     """
     Application factory to create and configure the Flask app.
@@ -14,8 +17,19 @@ def create_app(config_class=Config):
     # Configure CORS (allow React frontend port 5173 by default)
     CORS(app, resources={r"/api/*": {"origins": app.config['CORS_ORIGIN']}}, supports_credentials=True)
     
+    # Initialize Limiter
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["1000 per day", "200 per hour"],
+        storage_uri="memory://"
+    )
+    
     # Initialize extensions
     db.init_app(app)
+    
+    # Apply specific limits to auth blueprint to prevent spam/DDoS
+    limiter.limit("10 per minute")(auth_bp)
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
