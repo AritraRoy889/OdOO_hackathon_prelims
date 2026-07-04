@@ -13,13 +13,13 @@ def validate_login_input(data):
     if not data:
         return ["Request body is missing."]
         
-    email = data.get("email")
+    identifier = data.get("identifier")
     password = data.get("password")
     
-    if not email:
-        errors.append("Email is required.")
-    elif not isinstance(email, str) or not EMAIL_REGEX.match(email.strip()):
-        errors.append("Please provide a valid email address.")
+    if not identifier:
+        errors.append("Identifier (Email or Employee ID) is required.")
+    elif not isinstance(identifier, str):
+        errors.append("Please provide a valid identifier.")
         
     if not password:
         errors.append("Password is required.")

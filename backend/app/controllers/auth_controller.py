@@ -21,11 +21,11 @@ def login():
         if validation_errors:
             return send_error("Validation failed.", errors=validation_errors, status_code=400)
             
-        email = sanitize_email(data.get("email"))
+        identifier = sanitize_email(data.get("identifier"))
         password = data.get("password")
         
         # ── Step 2: Fetch User from DB ───────────────────────────
-        user = User.query.filter(or_(User.email == email, User.employee_id == email)).first()
+        user = User.query.filter(or_(User.email == identifier, User.employee_id == identifier)).first()
         if not user:
             return send_error("Invalid email or password.", status_code=401)
             
