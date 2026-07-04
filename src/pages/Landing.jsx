@@ -17,15 +17,35 @@ export default function Landing() {
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate email format strictly
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 8) {
+      alert("Password must be strictly at least 8 characters long.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    register(email, password, role);
-    if (role === 'Employee') {
-      navigate('/emp/dashboard');
+    setLoading(true);
+    const result = await register(email, password, role);
+    setLoading(false);
+    
+    if (result.success) {
+      if (role === 'Employee') {
+        navigate('/emp/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
-      navigate('/dashboard');
+      alert(result.error || "Registration failed");
     }
   };
 
@@ -128,36 +148,38 @@ export default function Landing() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Password" 
+                    minLength={8}
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-200" />
+                  <input 
+                    type="password" 
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter Password" 
+                    minLength={8}
                     className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
                     required
                   />
                 </div>
               </div>
 
-                  <div>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-200" />
-                      <input 
-                        type="password" 
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter Password" 
-                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/20 rounded-xl text-white placeholder-indigo-200/70 focus:bg-white/10 focus:ring-2 focus:ring-white/30 outline-none transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setRole('HR')}
-                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 ${
-                        role === 'HR' 
-                          ? 'bg-white text-indigo-700 border-white shadow-lg' 
-                          : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
-                      }`}
-                    >
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setRole('HR')}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all duration-200 ${
+                    role === 'HR' 
+                      ? 'bg-white text-indigo-700 border-white shadow-lg' 
+                      : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                  }`}
+                >
                       <Briefcase className="w-4 h-4" />
                       <span className="font-semibold text-sm">HR</span>
                     </button>

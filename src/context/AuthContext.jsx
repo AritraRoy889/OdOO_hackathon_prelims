@@ -15,42 +15,32 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    // 1. Check Simulated DB for registered users
-    const existingUsers = JSON.parse(localStorage.getItem('hrms_users_db') || '[]');
-    const foundUser = existingUsers.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      // Auto-patch missing employee ID for legacy registrations
-      if (foundUser.role === 'Employee' && !foundUser.employeeId) {
-        foundUser.employeeId = `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-        localStorage.setItem('hrms_users_db', JSON.stringify(existingUsers));
+  const login = async (identifier, password) => {
+    try {
+      const response = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: identifier, password })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setUser(data.data.user);
+        localStorage.setItem('hrms_user', JSON.stringify(data.data.user));
+        localStorage.setItem('hrms_token', data.data.token);
+        return { success: true, user: data.data.user };
+      } else {
+        return { success: false, error: data.message || 'Invalid email or password' };
       }
-      const userData = { ...defaultUser, email, name: foundUser.name, role: foundUser.role, employeeId: foundUser.employeeId };
-      setUser(userData);
-      localStorage.setItem('hrms_user', JSON.stringify(userData));
-      return { success: true, user: userData };
+    } catch (err) {
+      return { success: false, error: 'Network error. Make sure the backend is running.' };
     }
-
-    // 2. Fallback to Demo credentials
-    if (email === 'admin@hrms.com' && password === 'admin123') {
-      const userData = { ...defaultUser, email, role: 'HR' };
-      setUser(userData);
-      localStorage.setItem('hrms_user', JSON.stringify(userData));
-      return { success: true, user: userData };
-    }
-    if (email === 'emp@hrms.com' && password === 'emp123') {
-      const userData = { ...defaultUser, email, name: 'Employee Demo', role: 'Employee', employeeId: 'EMP-1234' };
-      setUser(userData);
-      localStorage.setItem('hrms_user', JSON.stringify(userData));
-      return { success: true, user: userData };
-    }
-    return { success: false, error: 'Invalid email or password' };
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('hrms_user');
+    localStorage.removeItem('hrms_token');
   };
 
   const updateUser = (data) => {
@@ -59,22 +49,26 @@ export function AuthProvider({ children }) {
     localStorage.setItem('hrms_user', JSON.stringify(updated));
   };
 
-  const register = (email, password, role) => {
-    // Save to simulated DB
-    const existingUsers = JSON.parse(localStorage.getItem('hrms_users_db') || '[]');
-    if (existingUsers.some(u => u.email === email)) {
-      return { success: false, error: 'Email already registered' };
+  const register = async (email, password, role) => {
+    try {
+      const response = await fetch('http://localhost:4000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setUser(data.data.user);
+        localStorage.setItem('hrms_user', JSON.stringify(data.data.user));
+        localStorage.setItem('hrms_token', data.data.token);
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Registration failed' };
+      }
+    } catch (err) {
+      return { success: false, error: 'Network error. Make sure the backend is running.' };
     }
-    const employeeId = role === 'Employee' ? `EMP-${Math.floor(1000 + Math.random() * 9000)}` : null;
-    const newUser = { email, password, role, name: email.split('@')[0], employeeId };
-    existingUsers.push(newUser);
-    localStorage.setItem('hrms_users_db', JSON.stringify(existingUsers));
-
-    // Automatically log them in
-    const userData = { ...defaultUser, email, name: newUser.name, role, employeeId };
-    setUser(userData);
-    localStorage.setItem('hrms_user', JSON.stringify(userData));
-    return { success: true };
   };
 
   return (

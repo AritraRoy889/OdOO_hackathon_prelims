@@ -13,7 +13,7 @@ const features = [
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm]     = useState({ email: 'admin@hrms.com', password: 'admin123', remember: false });
+  const [form, setForm]     = useState({ identifier: '', password: '', remember: false });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState('');
@@ -21,9 +21,19 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate identifier format
+    const isEmployeeId = /^EMP-\d+$/i.test(form.identifier.trim());
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.identifier.trim());
+    
+    if (!isEmployeeId && !isEmail) {
+      setError("Please enter a valid Email Address or Employee ID (e.g., EMP-1234)");
+      return;
+    }
+
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
-    const result = login(form.email, form.password);
+    const result = await login(form.identifier, form.password);
     setLoading(false);
     if (result.success) {
       if (result.user.role === 'Employee') {
@@ -145,16 +155,16 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address or Employee ID</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  value={form.identifier}
+                  onChange={e => setForm(f => ({ ...f, identifier: e.target.value }))}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 dark:focus:ring-indigo-900/30 transition-all"
-                  placeholder="admin@hrms.com"
+                  placeholder="admin@hrms.com or EMP-1234"
                 />
               </div>
             </div>

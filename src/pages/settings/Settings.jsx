@@ -66,7 +66,7 @@ export default function Settings() {
     e.preventDefault();
     setPwError('');
     if (pwForm.current !== 'admin123') { setPwError('Current password is incorrect'); return; }
-    if (pwForm.newPw.length < 6) { setPwError('New password must be at least 6 characters'); return; }
+    if (pwForm.newPw.length < 8) { setPwError('New password must be at least 8 characters'); return; }
     if (pwForm.newPw !== pwForm.confirm) { setPwError('Passwords do not match'); return; }
     setPwForm({ current: '', newPw: '', confirm: '' });
     showSaved();
@@ -181,13 +181,13 @@ export default function Settings() {
               </div>
               <div className="p-6 space-y-4 max-w-md">
                 {pwError && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-sm text-red-600 dark:text-red-400">{pwError}</div>}
-                <div><label className={labelCls}>Current Password</label><input className={inputCls} type="password" value={pwForm.current} onChange={e => setPwForm(p=>({...p,current:e.target.value}))} placeholder="••••••••" /></div>
-                <div><label className={labelCls}>New Password</label><input className={inputCls} type="password" value={pwForm.newPw} onChange={e => setPwForm(p=>({...p,newPw:e.target.value}))} placeholder="••••••••" /></div>
-                <div><label className={labelCls}>Confirm Password</label><input className={inputCls} type="password" value={pwForm.confirm} onChange={e => setPwForm(p=>({...p,confirm:e.target.value}))} placeholder="••••••••" /></div>
+                <div><label className={labelCls}>Current Password</label><input className={inputCls} type="password" required value={pwForm.current} onChange={e => setPwForm(p=>({...p,current:e.target.value}))} placeholder="••••••••" /></div>
+                <div><label className={labelCls}>New Password</label><input className={inputCls} type="password" required minLength={8} value={pwForm.newPw} onChange={e => setPwForm(p=>({...p,newPw:e.target.value}))} placeholder="••••••••" /></div>
+                <div><label className={labelCls}>Confirm Password</label><input className={inputCls} type="password" required minLength={8} value={pwForm.confirm} onChange={e => setPwForm(p=>({...p,confirm:e.target.value}))} placeholder="••••••••" /></div>
                 <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-3">
                   <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Password requirements:</p>
                   <ul className="text-xs text-violet-500 dark:text-violet-400 mt-1 space-y-0.5 list-disc list-inside">
-                    <li>Minimum 6 characters</li>
+                    <li>Minimum 8 characters</li>
                     <li>Use a mix of letters and numbers</li>
                   </ul>
                 </div>
