@@ -1,14 +1,67 @@
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, UploadCloud, CheckCircle, Clock } from 'lucide-react';
 
-const docs = [
-  { id: 1, name: 'Offer Letter', type: 'PDF', status: 'Verified', date: 'Jan 05, 2024', size: '1.2 MB' },
-  { id: 2, name: 'Aadhar Card', type: 'JPG', status: 'Verified', date: 'Jan 08, 2024', size: '450 KB' },
-  { id: 3, name: 'PAN Card', type: 'PDF', status: 'Verified', date: 'Jan 08, 2024', size: '2.1 MB' },
-  { id: 4, name: 'Degree Certificate', type: 'PDF', status: 'Pending Review', date: 'Jul 01, 2026', size: '3.4 MB' },
+const initialDocs = [
+  { id: 1, name: 'Offer Letter', type: 'PDF', status: 'Verified', date: 'Jan 05, 2024', size: '1.2 MB', data: null },
+  { id: 2, name: 'Aadhar Card', type: 'JPG', status: 'Verified', date: 'Jan 08, 2024', size: '450 KB', data: null },
+  { id: 3, name: 'PAN Card', type: 'PDF', status: 'Verified', date: 'Jan 08, 2024', size: '2.1 MB', data: null },
+  { id: 4, name: 'Degree Certificate', type: 'PDF', status: 'Pending Review', date: 'Jul 01, 2026', size: '3.4 MB', data: null },
 ];
 
 export default function MyDocuments() {
+  const [documents, setDocuments] = useState(() => {
+    const saved = localStorage.getItem('hrms_my_docs');
+    return saved ? JSON.parse(saved) : initialDocs;
+  });
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('hrms_my_docs', JSON.stringify(documents));
+  }, [documents]);
+
+  const formatSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const newDoc = {
+        id: Date.now(),
+        name: file.name.split('.').slice(0, -1).join('.'),
+        type: file.name.split('.').pop().toUpperCase(),
+        status: 'Pending Review',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        size: formatSize(file.size),
+        data: event.target.result // Base64 data for download
+      };
+      setDocuments([newDoc, ...documents]);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so the same file can be uploaded again if needed
+    e.target.value = '';
+  };
+
+  const handleDownload = (doc) => {
+    if (doc.data) {
+      const a = document.createElement('a');
+      a.href = doc.data;
+      a.download = `${doc.name}.${doc.type.toLowerCase()}`;
+      a.click();
+    } else {
+      alert("This is a mock document without actual file data.");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <motion.div
@@ -20,9 +73,20 @@ export default function MyDocuments() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">My Documents</h1>
           <p className="text-gray-500 dark:text-gray-400">Manage and upload your official employee documents.</p>
         </div>
-        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm whitespace-nowrap">
-          <UploadCloud className="w-5 h-5" /> Upload Document
-        </button>
+        <div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm whitespace-nowrap"
+          >
+            <UploadCloud className="w-5 h-5" /> Upload Document
+          </button>
+        </div>
       </motion.div>
 
       <motion.div
@@ -43,7 +107,7 @@ export default function MyDocuments() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {docs.map((doc) => (
+              {documents.map((doc) => (
                 <tr key={doc.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
@@ -72,7 +136,7 @@ export default function MyDocuments() {
                     )}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <button className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Download">
+                    <button onClick={() => handleDownload(doc)} className="p-2 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Download">
                       <Download className="w-5 h-5" />
                     </button>
                   </td>
