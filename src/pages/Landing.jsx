@@ -15,7 +15,7 @@ export default function Landing() {
   const [role, setRole] = useState('Employee');
   const [loading, setLoading] = useState(false);
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     
     // Validate email format strictly
