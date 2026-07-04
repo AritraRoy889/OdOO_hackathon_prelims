@@ -1,17 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, Search } from 'lucide-react';
 import Badge, { statusColor } from '../../components/common/Badge';
 import Avatar from '../../components/common/Avatar';
-import { leaveRequests as initial } from '../../data/sampleData';
 
 export default function LeaveApproval() {
-  const [requests, setRequests] = useState(initial);
+  const [requests, setRequests] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
+
+  const fetchAllLeaves = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:4000/api/leave/all', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRequests(data.leaves);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllLeaves();
+  }, []);
 
   const filtered = requests.filter(r => {
-    const matchSearch = r.employee.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = r.employee_name.toLowerCase().includes(search.toLowerCase()) || r.leave_type.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'All' || r.status === filter;
     return matchSearch && matchFilter;
   });
@@ -20,8 +43,26 @@ export default function LeaveApproval() {
   const approved  = requests.filter(r => r.status === 'Approved').length;
   const rejected  = requests.filter(r => r.status === 'Rejected').length;
 
-  const updateStatus = (id, status) => {
-    setRequests(reqs => reqs.map(r => r.id === id ? { ...r, status } : r));
+  const updateStatus = async (id, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:4000/api/leave/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRequests(reqs => reqs.map(r => r.id === id ? { ...r, status } : r));
+      } else {
+        alert(data.error || 'Failed to update status');
+      }
+    } catch (err) {
+      alert('Error updating leave request');
+    }
   };
 
   return (
@@ -76,7 +117,11 @@ export default function LeaveApproval() {
 
       {/* Requests */}
       <div className="space-y-3">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-16 border border-gray-200 dark:border-gray-700 text-center">
+            <p className="text-gray-400 dark:text-gray-500">Loading requests...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-16 border border-gray-200 dark:border-gray-700 text-center">
             <Clock className="w-12 h-12 text-gray-200 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-gray-400 dark:text-gray-500">No leave requests found</p>
@@ -91,17 +136,17 @@ export default function LeaveApproval() {
           >
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Avatar name={req.employee} size="lg" />
+                <Avatar name={req.employee_name} size="lg" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-gray-900 dark:text-white">{req.employee}</p>
-                    <Badge label={req.type} color="violet" />
+                    <p className="font-semibold text-gray-900 dark:text-white">{req.employee_name}</p>
+                    <Badge label={req.leave_type} color="violet" />
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">{req.reason}</p>
                   <div className="flex gap-4 mt-2 text-xs text-gray-400">
-                    <span>📅 {req.from} → {req.to}</span>
+                    <span>📅 {req.from_date} → {req.to_date}</span>
                     <span>⏱ {req.days} day{req.days > 1 ? 's' : ''}</span>
-                    <span>Applied: {req.appliedOn}</span>
+                    <span>Applied: {new Date(req.applied_on).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>

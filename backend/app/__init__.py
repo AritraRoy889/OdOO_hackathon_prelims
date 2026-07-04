@@ -3,6 +3,7 @@ from flask_cors import CORS
 from app.config import Config
 from app.models.user import db
 from app.routes.auth_routes import auth_bp
+from app.routes.leave_routes import leave_bp
 
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -70,9 +71,10 @@ def create_app(config_class=Config):
     # Ensures developers can run and verify the auth module locally without manual schema creation
     if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
         with app.app_context():
+            from app.models.user import User
+            from app.models.leave import LeaveRequest
             db.create_all()
             # Seed default admin user if database is completely empty
-            from app.models.user import User
             if User.query.count() == 0:
                 admin_user = User(
                     name="Ankita Sharma",
