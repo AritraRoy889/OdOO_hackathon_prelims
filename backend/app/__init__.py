@@ -34,6 +34,7 @@ def create_app(config_class=Config):
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(leave_bp, url_prefix='/api/leave')
     
     # Public health check endpoint
     @app.route('/api/health', methods=['GET'])
